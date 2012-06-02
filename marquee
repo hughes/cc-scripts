@@ -8,11 +8,14 @@ local maxDelay = 30
 local running = false
 local keys = {
     backspace=14,
+    enter=28,
     f1=59,
     leftArrow=203,
     rightArrow=205,
 }
 local locked = false
+local password = ""
+local correct_password = "asdf"
 
 local banner = {
 " ___ ___                                          ",
@@ -95,7 +98,7 @@ end
 function drawLockedGUI()
     local line = #banner + 2
     term.setCursorPos(1,line)
-    term.write("  Password: ")
+    term.write("  Password: " .. string.rep('*', string.len(password)))
 end
 
 function drawUnlockedGUI()
@@ -141,7 +144,8 @@ function gui()
         local evt, p1, p2, p3 = os.pullEvent()
         if evt == "char" then
             if locked then
-                -- something locked
+                -- read the password
+                password = password .. p1
             else
                 str = str .. p1
                 save()
@@ -156,8 +160,13 @@ function gui()
             elseif p1 == keys["rightArrow"] and not locked then
                 delay = math.min(delay+1, maxDelay)
                 save()
-            elseif p1 == keys["f1"] then
-                locked = not locked
+            elseif p1 == keys["f1"] and not locked then
+                locked = true
+            elseif p1 == keys["enter"] and locked then
+                if password == correct_password then
+                    locked = false
+                end
+                password = ""
             end
         end
         drawGUI()
