@@ -1,0 +1,131 @@
+-- marquee v1.0
+
+local monitor
+local sides = {"left", "right", "top", "bottom", "back", "front"}
+local str = "Hello "
+local pos = 1
+local delayStep = 0.03
+local delay = 15
+local maxDelay = 30
+local running = false
+
+local banner = {
+" ___ ___                                          ",
+"|   Y   |.---.-..----..-----..--.--..-----..-----.",
+"|.      ||  _  ||   _||  _  ||  |  ||  -__||  -__|",
+"|. \\_/  ||___._||__|  |__   ||_____||_____||_____|",
+"|:  |   |                |__|                     ",
+"|::.|:. |   v1.0                 by zapwow        ",
+"'--- ---'   "
+}
+--[[
+"",
+ "Delay: <----------X------------------------> 0.3s",
+"",
+ "Text: Hello, world!
+ ]]
+
+function setup()
+	for i,side in ipairs(sides) do
+		if peripheral.getType(side) == "monitor" then
+			print("Found monitor on side " .. side)
+			monitor = peripheral.wrap(side)
+			monitor.setTextScale(5)
+			running = true
+			return
+		end
+	end
+	error("No monitor attached")
+end
+
+function draw()
+	-- draw the string offset by pos
+	-- increment pos
+	-- when pos > str len, pos = 1
+	monitor.clear()
+	monitor.setCursorPos(1,1)
+
+	if string.len(str) == 0 then
+		return
+	end
+
+	-- pad the str to fit the screen
+	local _str = str
+	local len, height = monitor.getSize()
+	while string.len(_str) < len do
+		_str = _str .. _str
+	end
+
+	local output = string.sub(_str, pos) .. string.sub(_str, 0, pos-1)
+	monitor.write(output)
+	pos = pos + 1
+	if pos > string.len(_str) then
+		pos = 1
+	end
+end
+
+function marquee()
+	while running do
+		-- local evt = os.pullEvent() -- to allow the thread to yield
+		draw()
+		sleep(delay*delayStep)
+	end
+end
+
+function drawBanner()
+	term.clear()
+	local line = 1
+	for i,v in ipairs(banner) do
+		term.setCursorPos(1,i)
+		term.write(v)
+		line = i
+	end
+	-- delay gui
+	line = line + 2
+	term.setCursorPos(1,line)
+	term.write(
+		"  Delay: <" .. 
+		string.rep('-', delay-1) ..
+		'X' .. 
+		string.rep('-', maxDelay - delay) .. 
+		"> " .. 
+		delay*delayStep .. 
+		"s"
+	)
+	-- text
+	line = line + 2
+	term.setCursorPos(1,line)
+	term.write(
+		"  Text: " .. 
+		str
+	)
+	term.setCursorBlink(true)
+
+end
+
+function gui()
+	drawBanner()
+	while running do
+		local evt, p1, p2, p3 = os.pullEvent() -- to allow the thread to yield
+		if evt == "char" then
+			str = str .. p1
+			print(str)
+		elseif evt == "key" then
+			if p1 == 14 then
+				-- backspace
+				str = string.sub(str, 1, string.len(str)-1)
+			elseif p1 == 203 then
+				-- left arrow
+				delay = math.max(delay-1, 1)
+			elseif p1 == 205 then
+				-- right arrow
+				delay = math.min(delay+1, maxDelay)
+			end
+		end
+		drawBanner()
+	end
+end
+
+
+setup()
+parallel.waitForAny(marquee, gui)
