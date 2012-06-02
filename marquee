@@ -2,9 +2,9 @@ local monitor
 local sides = {"left", "right", "top", "bottom", "back", "front"}
 local str = "Hello, world! "
 local pos = 1
-local delayStep = 0.03
-local delay = 15
-local maxDelay = 30
+local speedStep = 0.5
+local speed = 2
+local maxSpeed = 10
 local running = false
 local keys = {
     backspace=14,
@@ -32,8 +32,10 @@ function setup()
     local file = io.open("marquee-text", "r")
     if file then
         str = file:read("*l") or str
-        delay = tonumber(file:read("*l") or delay)
-        password = file:read("l") or password
+        print(speed)
+        print(maxSpeed)
+        speed = 2 --math.min(tonumber(file:read("*l") or speed), maxSpeed)
+        password = file:read("*l") or password
         file:close()
     end
 
@@ -71,8 +73,11 @@ function draw()
 
     local output = string.sub(_str, pos) .. string.sub(_str, 0, pos-1)
     monitor.write(output)
+end
+
+function update()
     pos = pos + 1
-    if pos > string.len(_str) then
+    if pos > string.len(str) then
         pos = 1
     end
 end
@@ -80,7 +85,12 @@ end
 function marquee()
     while running do
         draw()
-        sleep(delay*delayStep)
+        if speed > 0 then
+            update()
+            sleep(1/speed)
+        else
+            sleep(0.5)
+        end
     end
 end
 
@@ -102,22 +112,32 @@ end
 function drawLockedGUI()
     local line = #banner + 2
     term.setCursorPos(1,line)
-    term.write("  Password: " .. string.rep('*', string.len(password)))
+    if string.len(correct_password) == 0 then
+        term.write("  Set password: ")
+    else
+        term.write("  Password: ")
+    end
+    term.write(string.rep('*', string.len(password)))
 end
 
 function drawUnlockedGUI()
     local line = #banner + 2
-    term.setCursorPos(1,line)
 
-    -- delay gui
+    -- lock
+    term.setCursorPos(1,line)
+    term.write("  To lock terminal, press F1")
+
+    -- speed gui
+    line = line + 2
+    term.setCursorPos(1,line)
     term.write(
-        "  Delay: <" .. 
-        string.rep('-', delay-1) ..
+        "  Speed: <" .. 
+        string.rep('-', speed/speedStep) ..
         'X' .. 
-        string.rep('-', maxDelay - delay) .. 
+        string.rep('-', (maxSpeed - speed)/speedStep) .. 
         "> " .. 
-        delay*delayStep .. 
-        "s"
+        string.format("%.1f", speed) .. 
+        " steps/sec"
     )
 
     -- text
@@ -128,8 +148,6 @@ function drawUnlockedGUI()
         str
     )
     term.setCursorBlink(true)
-
-    -- lock
 end
 
 function save()
@@ -161,16 +179,21 @@ function gui()
                 str = string.sub(str, 1, string.len(str)-1)
                 save()
             elseif p1 == keys["leftArrow"] and not locked then
-                delay = math.max(delay-1, 1)
+                speed = math.max(speed-speedStep, 0)
                 save()
             elseif p1 == keys["rightArrow"] and not locked then
-                delay = math.min(delay+1, maxDelay)
+                speed = math.min(speed+speedStep, maxSpeed)
                 save()
             elseif p1 == keys["f1"] and not locked then
                 locked = true
             elseif p1 == keys["enter"] and locked then
-                if password == correct_password then
-                    locked = false
+                if string.len(correct_password) == 0 then
+                    correct_password = password
+                    save()
+                else
+                    if password == correct_password then
+                        locked = false
+                    end
                 end
                 password = ""
             end
