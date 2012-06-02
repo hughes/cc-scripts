@@ -6,6 +6,13 @@ local delayStep = 0.03
 local delay = 15
 local maxDelay = 30
 local running = false
+local keys = {
+    backspace=14,
+    f1=59,
+    leftArrow=203,
+    rightArrow=205,
+}
+local locked = false
 
 local banner = {
 " ___ ___                                          ",
@@ -70,17 +77,32 @@ function marquee()
     end
 end
 
-function drawBanner()
+function drawGUI()
+    --always draw the banner
     term.clear()
-    local line = 1
     for i,v in ipairs(banner) do
         term.setCursorPos(1,i)
         term.write(v)
-        line = i
     end
-    -- delay gui
-    line = line + 2
+
+    if locked then
+        drawLockedGUI()
+    else
+        drawUnlockedGUI()
+    end
+end
+
+function drawLockedGUI()
+    local line = #banner + 2
     term.setCursorPos(1,line)
+    term.write("  Password: ")
+end
+
+function drawUnlockedGUI()
+    local line = #banner + 2
+    term.setCursorPos(1,line)
+
+    -- delay gui
     term.write(
         "  Delay: <" .. 
         string.rep('-', delay-1) ..
@@ -90,6 +112,7 @@ function drawBanner()
         delay*delayStep .. 
         "s"
     )
+
     -- text
     line = line + 2
     term.setCursorPos(1,line)
@@ -99,6 +122,7 @@ function drawBanner()
     )
     term.setCursorBlink(true)
 
+    -- lock
 end
 
 function save()
@@ -112,28 +136,31 @@ function save()
 end
 
 function gui()
-    drawBanner()
+    drawGUI()
     while running do
         local evt, p1, p2, p3 = os.pullEvent()
         if evt == "char" then
-            str = str .. p1
-            save()
-        elseif evt == "key" then
-            if p1 == 14 then
-                -- backspace
-                str = string.sub(str, 1, string.len(str)-1)
-                save()
-            elseif p1 == 203 then
-                -- left arrow
-                delay = math.max(delay-1, 1)
-                save()
-            elseif p1 == 205 then
-                -- right arrow
-                delay = math.min(delay+1, maxDelay)
+            if locked then
+                -- something locked
+            else
+                str = str .. p1
                 save()
             end
+        elseif evt == "key" then
+            if p1 == keys["backspace"] and not locked then
+                str = string.sub(str, 1, string.len(str)-1)
+                save()
+            elseif p1 == keys["leftArrow"] and not locked then
+                delay = math.max(delay-1, 1)
+                save()
+            elseif p1 == keys["rightArrow"] and not locked then
+                delay = math.min(delay+1, maxDelay)
+                save()
+            elseif p1 == keys["f1"] then
+                locked = not locked
+            end
         end
-        drawBanner()
+        drawGUI()
     end
 end
 
