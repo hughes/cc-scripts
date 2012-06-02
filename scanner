@@ -1,0 +1,54 @@
+local keys = {
+    enter=28,
+}
+
+function setup()
+    term.write("width (x): ")
+    x = tonumber(readLine())
+    term.write("depth (z): ")
+    z = tonumber(readLine())
+    term.write("height (y): ")
+    y = tonumber(readLine())
+end
+
+function readLine()
+    term.setCursorBlink(true)
+    local str = ""
+    local reading = true
+    while reading do
+        evt, p1 = os.pullEvent()
+        if evt == "char" then
+            str = str .. p1
+            term.write(p1)
+        elseif evt == "key" and p1 == keys["enter"] then
+            reading = false
+        end
+    end
+    term.setCursorBlink(false)
+    local x,y = term.getCursorPos()
+    term.setCursorPos(1,y+1)
+    return str
+end
+
+function scan()
+    for i=0,y do
+        moveTo(0,y+1-i,0)
+        scanLayer(1,1,x,z)
+    end
+end
+
+function moveTo(x,y,z)
+    -- move there
+end
+
+function scanLayer(x1,z1,x2,z2)
+    -- scan that
+end
+
+function save()
+    -- save it
+end
+
+setup()
+scan()
+save()
