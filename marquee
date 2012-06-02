@@ -32,10 +32,8 @@ function setup()
     local file = io.open("marquee-text", "r")
     if file then
         str = file:read("*l") or str
-        print(speed)
-        print(maxSpeed)
-        speed = 2 --math.min(tonumber(file:read("*l") or speed), maxSpeed)
-        password = file:read("*l") or password
+        speed = tonumber(file:read("*l")) or speed
+        correct_password = file:read("*l") or password
         file:close()
     end
 
@@ -155,7 +153,7 @@ function save()
     if file then
         file:write(str)
         file:write("\n")
-        file:write(delay)
+        file:write(speed)
         file:write("\n")
         file:write(password)
         file:close()
