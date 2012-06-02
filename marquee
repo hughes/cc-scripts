@@ -29,16 +29,21 @@ local banner = {
 }
 
 function setup()
+    -- prevent user from terminating
+    os.pullEvent = os.pullEventRaw
+
     -- attempt to load the string from disk
     local file = io.open("marquee-text", "r")
     if file then
         str = file:read("*l") or str
         speed = tonumber(file:read("*l")) or speed
-        correct_password = file:read("*l") or password
+        correct_password = file:read("*l") or correct_password
+        if string.len(correct_password) > 0 then
+            -- the password was set at some point, lock automatically
+            locked = true
+        end
         file:close()
     end
-
-    -- check if we can use the password
 
     for i,side in ipairs(sides) do
         if peripheral.getType(side) == "monitor" then
