@@ -10,6 +10,7 @@ local keys = {
     backspace=14,
     enter=28,
     f1=59,
+    f3=61,
     leftArrow=203,
     rightArrow=205,
 }
@@ -125,6 +126,11 @@ function drawUnlockedGUI()
     term.setCursorPos(1,line)
     term.write("  To lock terminal, press F1")
 
+    -- exit
+    line = line + 1
+    term.setCursorPos(1,line)
+    term.write("  To quit, press F3")
+
     -- speed gui
     line = line + 2
     term.setCursorPos(1,line)
@@ -184,6 +190,10 @@ function gui()
                 save()
             elseif p1 == keys["f1"] and not locked then
                 locked = true
+            elseif p1 == keys["f3"] and not locked then
+                term.clear()
+                term.setCursorPos(1,1)
+                return true
             elseif p1 == keys["enter"] and locked then
                 if string.len(correct_password) == 0 then
                     correct_password = password
