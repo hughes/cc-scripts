@@ -80,6 +80,7 @@ function draw()
 end
 
 function update()
+    if speed == 0 then pos = 1 return end
     pos = pos + 1
     if pos > string.len(str) then
         pos = 1
